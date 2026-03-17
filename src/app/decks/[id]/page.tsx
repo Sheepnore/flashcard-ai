@@ -7,6 +7,12 @@ import { getDeck, saveDeck, createCard, deleteCard } from "@/lib/storage";
 import type { Deck } from "@/types";
 import Button from "@/components/ui/Button";
 
+const MAX_WORDS = 50;
+
+function wordCount(text: string) {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
 export default function DeckPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -14,6 +20,11 @@ export default function DeckPage() {
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
   const [showForm, setShowForm] = useState(false);
+
+  const frontWords = wordCount(front);
+  const backWords = wordCount(back);
+  const frontOver = frontWords > MAX_WORDS;
+  const backOver = backWords > MAX_WORDS;
 
   useEffect(() => {
     const d = getDeck(id);
@@ -27,7 +38,7 @@ export default function DeckPage() {
 
   function handleAddCard(e: React.FormEvent) {
     e.preventDefault();
-    if (!front.trim() || !back.trim()) return;
+    if (!front.trim() || !back.trim() || frontOver || backOver) return;
     createCard(id, front.trim(), back.trim());
     setFront("");
     setBack("");
@@ -78,31 +89,37 @@ export default function DeckPage() {
         >
           <h2 className="mb-4 text-lg font-semibold">New Card</h2>
           <div className="mb-4">
-            <label className="mb-1 block text-sm font-medium text-zinc-700">
-              Front
-            </label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-sm font-medium text-zinc-700">Front</label>
+              <span className={`text-xs ${frontOver ? "text-red-500 font-medium" : "text-zinc-400"}`}>
+                {frontWords}/{MAX_WORDS} words
+              </span>
+            </div>
             <textarea
               value={front}
               onChange={(e) => setFront(e.target.value)}
               placeholder="Question or term"
               rows={3}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
+              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 resize-none ${frontOver ? "border-red-400 focus:border-red-500 focus:ring-red-500" : "border-zinc-300 focus:border-indigo-500 focus:ring-indigo-500"}`}
               autoFocus
             />
           </div>
           <div className="mb-4">
-            <label className="mb-1 block text-sm font-medium text-zinc-700">
-              Back
-            </label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-sm font-medium text-zinc-700">Back</label>
+              <span className={`text-xs ${backOver ? "text-red-500 font-medium" : "text-zinc-400"}`}>
+                {backWords}/{MAX_WORDS} words
+              </span>
+            </div>
             <textarea
               value={back}
               onChange={(e) => setBack(e.target.value)}
               placeholder="Answer or definition"
               rows={3}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
+              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 resize-none ${backOver ? "border-red-400 focus:border-red-500 focus:ring-red-500" : "border-zinc-300 focus:border-indigo-500 focus:ring-indigo-500"}`}
             />
           </div>
-          <Button type="submit" disabled={!front.trim() || !back.trim()}>
+          <Button type="submit" disabled={!front.trim() || !back.trim() || frontOver || backOver}>
             Add Card
           </Button>
         </form>
